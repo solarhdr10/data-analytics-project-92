@@ -44,3 +44,48 @@ left join employees as e
 on s.sales_person_id = e.employee_id
 group by 1, 2
 order by MIN(extract(ISODOW from s.sale_date)) ASC, CONCAT(e.first_name, ' ', e.last_name) ASC;
+
+-- запрос, который возвращает количество клиентов в каждой возрастной категории
+select
+	case
+		when c.age between 16 and 25 then '16-25'
+		when c.age between 26 and 40 then '26-40'
+		when c.age > 40 then '40+'
+	end as age_category,
+	count(c.customer_id) as age_count
+from customers as c
+group by 1
+order by 1;
+
+
+-- запрос возвращает колчисевто уникалных покупателей и общую выручку по месяцам
+select 
+	trim(to_char(s.sale_date, 'yyyy-mm')) as selling_month,
+	count(distinct s.customer_id) as total_customers,
+	floor(sum(s.quantity * p.price)) as income
+from sales as s
+left join products as p
+on s.product_id = p.product_id
+group by 1 
+order by 1 asc;
+
+
+-- запрос возвращает список покупателей первая покупка которых пришлась на время акций
+select 
+	CONCAT(c.first_name, ' ', c.last_name) as customer,
+	MIN(s.sale_date) as sale_date,
+	CONCAT(e.first_name, ' ', e.last_name) as seller
+from (
+	select distinct on (s.customer_id) *
+	from sales as s
+	order by s.customer_id, s.sale_date
+) as s
+left join customers as c
+on s.customer_id = c.customer_id
+left join employees as e
+on s.sales_person_id = e.employee_id
+left join products as p
+on s.product_id = p.product_id
+where p.price = 0
+group by 1, s.customer_id, 3
+order by s.customer_id;
