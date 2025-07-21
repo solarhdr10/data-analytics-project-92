@@ -35,7 +35,7 @@ order by 2 asc;
 -- запрос возвращает суммарынй доход каждого сотрудника за каждый день недели
 select
 	CONCAT(e.first_name, ' ', e.last_name) as seller,
-	TRIM(to_char( s.sale_date, 'Day')) as day_of_week,
+	TRIM(to_char( s.sale_date, 'day')) as day_of_week,
 	FLOOR(SUM(s.quantity * p.price))as income
 from sales as s
 left join products as p
