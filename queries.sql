@@ -51,53 +51,56 @@ LEFT JOIN products AS p
     ON s.product_id = p.product_id
 LEFT JOIN employees AS e
     ON s.sales_person_id = e.employee_id
-GROUP BY CONCAT(e.first_name, ' ', e.last_name)
+GROUP BY
+    CONCAT(e.first_name, ' ', e.last_name),
+    TO_CHAR(s.sale_date, 'day'),
+    EXTRACT(ISODOW FROM s.sale_date)
 ORDER BY
-    MIN(EXTRACT(ISODOW FROM s.sale_date)) ASC,
+    EXTRACT(ISODOW FROM s.sale_date) ASC,
     CONCAT(e.first_name, ' ', e.last_name) ASC;
 
 -- запрос, который возвращает количество клиентов в каждой возрастной категории
-WITH customer_categories AS (
-    SELECT
-        CASE
-            WHEN c.age BETWEEN 16 AND 25 THEN '16-25'
-            WHEN c.age BETWEEN 26 AND 40 THEN '26-40'
-            WHEN c.age > 40 THEN '40+'
-        END AS age_category
-    FROM customers AS c
-)
-
 SELECT
-    age_category,
+    CASE
+        WHEN c.age BETWEEN 16 AND 25 THEN '16-25'
+        WHEN c.age BETWEEN 26 AND 40 THEN '26-40'
+        WHEN c.age > 40 THEN '40+'
+    END AS age_category,
     COUNT(*) AS age_count
-FROM customer_categories
-GROUP BY age_category
-ORDER BY age_category;
+FROM customers AS c
+GROUP BY
+    CASE
+        WHEN c.age BETWEEN 16 AND 25 THEN '16-25'
+        WHEN c.age BETWEEN 26 AND 40 THEN '26-40'
+        WHEN c.age > 40 THEN '40+'
+    END
+ORDER BY
+    CASE
+        WHEN c.age BETWEEN 16 AND 25 THEN '16-25'
+        WHEN c.age BETWEEN 26 AND 40 THEN '26-40'
+        WHEN c.age > 40 THEN '40+'
+    END;
 
 
 -- запрос возвращает колчисевто уникалных покупателей и общую выручку по месяцам
 SELECT
-    TRIM(TO_CHAR(s.sale_date, 'yyyy-mm')) AS selling_month,
+    TO_CHAR(s.sale_date, 'yyyy-mm') AS selling_month,
     COUNT(DISTINCT s.customer_id) AS total_customers,
     FLOOR(SUM(s.quantity * p.price)) AS income
 FROM sales AS s
 LEFT JOIN products AS p
     ON s.product_id = p.product_id
-GROUP BY TRIM(TO_CHAR(s.sale_date, 'yyyy-mm'))
-ORDER BY TRIM(TO_CHAR(s.sale_date, 'yyyy-mm')) ASC;
+GROUP BY TO_CHAR(s.sale_date, 'yyyy-mm')
+ORDER BY TO_CHAR(s.sale_date, 'yyyy-mm') ASC;
 
 
 -- запрос возвращает список покупателей 
 -- первая покупка которых пришлась на время акций
-SELECT
+SELECT DISTINCT ON (s.customer_id)
     CONCAT(c.first_name, ' ', c.last_name) AS customer,
     MIN(s.sale_date) AS sale_date,
     CONCAT(e.first_name, ' ', e.last_name) AS seller
-FROM (
-    SELECT DISTINCT ON (s.customer_id) *
-    FROM sales AS s
-    ORDER BY s.customer_id, s.sale_date
-) AS s
+FROM sales AS s
 LEFT JOIN customers AS c
     ON s.customer_id = c.customer_id
 LEFT JOIN employees AS e
@@ -107,5 +110,6 @@ LEFT JOIN products AS p
 WHERE p.price = 0
 GROUP BY
     CONCAT(c.first_name, ' ', c.last_name),
-    s.customer_id, CONCAT(e.first_name, ' ', e.last_name)
+    s.customer_id,
+    CONCAT(e.first_name, ' ', e.last_name)
 ORDER BY s.customer_id;
