@@ -98,7 +98,7 @@ ORDER BY TO_CHAR(s.sale_date, 'yyyy-mm') ASC;
 -- первая покупка которых пришлась на время акций
 SELECT DISTINCT ON (s.customer_id)
     CONCAT(c.first_name, ' ', c.last_name) AS customer,
-    s.sale_date AS sale_date,
+    (s.sale_date) AS sale_date,
     CONCAT(e.first_name, ' ', e.last_name) AS seller
 FROM sales AS s
 LEFT JOIN customers AS c
