@@ -108,4 +108,6 @@ LEFT JOIN employees AS e
 LEFT JOIN products AS p
     ON s.product_id = p.product_id
 WHERE p.price = 0
-ORDER BY s.customer_id;
+ORDER BY
+    s.customer_id ASC,
+    CONCAT(c.first_name, ' ', c.last_name) ASC;
